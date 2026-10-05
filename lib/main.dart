@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'games.dart';
+import 'character_selector.dart';
 
 void main() => runApp(const MagicKidsWorldApp());
 
@@ -47,6 +49,10 @@ class GameState extends ChangeNotifier {
     await p.setStringList('items', items.toList());
     notifyListeners();
   }
+
+  Future<void> clickSound() async {
+    if (sound) await SystemSound.play(SystemSoundType.click);
+  }
 }
 
 class MagicKidsWorldApp extends StatefulWidget {
@@ -87,7 +93,7 @@ class _HomeState extends State<HomeScreen> {
       body: SafeArea(child: IndexedStack(index: tab, children: pages)),
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
-        onDestinationSelected: (i) => setState(() => tab = i),
+        onDestinationSelected: (i) { widget.game.clickSound(); setState(() => tab = i); },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.public_rounded), label: 'Worlds'),
@@ -103,18 +109,28 @@ class HomePage extends StatelessWidget {
   final GameState game;
   final VoidCallback onPlay;
   const HomePage({super.key, required this.game, required this.onPlay});
+  static const characters = ['🧒','👧','🦊','🐼','🐰','🐨'];
+
   @override Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(20),
     children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Hello, Explorer! 👋', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
-          Text('Your magical adventure awaits.', style: TextStyle(color: Colors.black54)),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Hello, Explorer! 👋', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
+          const Text('Your magical adventure awaits.', style: TextStyle(color: Colors.black54)),
         ]),
         Chip(label: Text('⭐ ${game.stars}')),
       ]),
-      const SizedBox(height: 18),
-      Container(
+      const SizedBox(height: 10),
+      Row(children: [
+        TweenAnimationBuilder<double>(tween: Tween(begin: .75, end: 1), duration: const Duration(milliseconds: 700), curve: Curves.elasticOut, builder: (_, scale, child) => Transform.scale(scale: scale, child: child), child: Text(characters[game.character], style: const TextStyle(fontSize: 48))),
+        const SizedBox(width: 10),
+        Text('Your friend is ready!', style: TextStyle(color: Colors.deepPurple.shade700, fontWeight: FontWeight.bold)),
+        const Spacer(),
+        IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CharacterSelector(game: game))), icon: const Icon(Icons.edit_rounded), tooltip: 'Choose character'),
+      ]),
+      const SizedBox(height: 10),
+      TweenAnimationBuilder<double>(tween: Tween(begin: 0, end: 1), duration: const Duration(milliseconds: 650), builder: (_, v, child) => Opacity(opacity: v, child: Transform.translate(offset: Offset(0, 16 * (1-v)), child: child)), child: Container(
         height: 210, padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), gradient: const LinearGradient(colors: [Color(0xFF7657E8), Color(0xFF32C7F5)])),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -124,7 +140,7 @@ class HomePage extends StatelessWidget {
           const Spacer(),
           FilledButton.icon(onPressed: onPlay, icon: const Icon(Icons.play_arrow_rounded), label: const Text('PLAY NOW')),
         ]),
-      ),
+      )),
       const SizedBox(height: 22),
       const Text('Today’s Adventure 🌈', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
       const SizedBox(height: 10),
@@ -164,7 +180,11 @@ class WorldsPage extends StatelessWidget {
     const SizedBox(height: 18),
     ...List.generate(worldData.length, (i) {
       final w = worldData[i]; final open = game.worlds.contains(i);
-      return Card(child: ListTile(enabled: open, contentPadding: const EdgeInsets.all(14), leading: CircleAvatar(radius: 28, child: Text(w.$2, style: const TextStyle(fontSize: 27))), title: Text(w.$1, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(w.$3), trailing: Icon(open ? Icons.chevron_right_rounded : Icons.lock_rounded)));
+      return TweenAnimationBuilder<double>(tween: Tween(begin: .92, end: 1), duration: Duration(milliseconds: 300 + i * 90), builder: (_, scale, child) => Transform.scale(scale: scale, child: child), child: Card(child: ListTile(
+        enabled: open, contentPadding: const EdgeInsets.all(14), leading: CircleAvatar(radius: 28, child: Text(w.$2, style: const TextStyle(fontSize: 27))),
+        title: Text(w.$1, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(w.$3), trailing: Icon(open ? Icons.play_arrow_rounded : Icons.lock_rounded),
+        onTap: open ? () { game.clickSound(); worldWelcome(context, w.$1, w.$2, w.$3); } : null,
+      )));
     }),
   ]);
 }
@@ -179,6 +199,8 @@ class RewardsPage extends StatelessWidget {
       Text('${game.stars} stars collected', style: const TextStyle(color: Colors.black54)),
       const SizedBox(height: 18),
       ...rewards.map((r) => Card(child: ListTile(leading: Text(r.$2, style: const TextStyle(fontSize: 35)), title: Text(r.$3, style: const TextStyle(fontWeight: FontWeight.bold)), subtitle: Text(game.items.contains(r.$1) ? 'Unlocked!' : 'Unlock at ${r.$4} stars'), trailing: Icon(game.items.contains(r.$1) ? Icons.check_circle : Icons.lock_outline)))),
+      const SizedBox(height: 18),
+      SwitchListTile(value: game.sound, onChanged: (v) async { game.sound = v; final p = await SharedPreferences.getInstance(); await p.setBool('sound', v); game.notifyListeners(); }, title: const Text('Sound effects 🔊'), subtitle: const Text('Tap sounds for navigation and actions')),
     ]);
   }
 }
@@ -187,6 +209,13 @@ void openGame(BuildContext context, GameState game) {
   Navigator.push(context, MaterialPageRoute(builder: (_) => const ColorMatchGame())).then((value) {
     if (value == true) game.reward();
   });
+}
+
+void worldWelcome(BuildContext context, String name, String icon, String description) {
+  showDialog(context: context, builder: (_) => AlertDialog(
+    title: Text('$icon $name'), content: Text('Welcome to $name!\n\n$description\n\nMore adventures will unlock as you play.'),
+    actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('LET’S GO!'))],
+  ));
 }
 
 void parentGate(BuildContext context) {
