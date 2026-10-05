@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'games.dart';
 
 void main() => runApp(const MagicKidsWorldApp());
 
@@ -20,12 +21,8 @@ class GameState extends ChangeNotifier {
     plays = p.getInt('plays') ?? 0;
     character = p.getInt('character') ?? 0;
     sound = p.getBool('sound') ?? true;
-    worlds
-      ..clear()
-      ..addAll((p.getStringList('worlds') ?? ['0']).map(int.parse));
-    items
-      ..clear()
-      ..addAll(p.getStringList('items') ?? []);
+    worlds..clear()..addAll((p.getStringList('worlds') ?? ['0']).map(int.parse));
+    items..clear()..addAll(p.getStringList('items') ?? []);
     notifyListeners();
   }
 
@@ -81,9 +78,9 @@ class _HomeState extends State<HomeScreen> {
   int tab = 0;
   @override Widget build(BuildContext context) {
     final pages = [
-      HomePage(game: widget.game, onPlay: () => openGame(context)),
+      HomePage(game: widget.game, onPlay: () => openGame(context, widget.game)),
       WorldsPage(game: widget.game),
-      GamesPage(game: widget.game),
+      GamesPage(onComplete: widget.game.reward),
       RewardsPage(game: widget.game),
     ];
     return Scaffold(
@@ -118,8 +115,7 @@ class HomePage extends StatelessWidget {
       ]),
       const SizedBox(height: 18),
       Container(
-        height: 210,
-        padding: const EdgeInsets.all(22),
+        height: 210, padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), gradient: const LinearGradient(colors: [Color(0xFF7657E8), Color(0xFF32C7F5)])),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('✨ MAGIC KIDS', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, letterSpacing: 2)),
@@ -136,10 +132,8 @@ class HomePage extends StatelessWidget {
       const SizedBox(height: 16),
       Row(children: [
         Expanded(child: StatCard(icon: '⭐', value: '${game.stars}', label: 'Stars')),
-        const SizedBox(width: 10),
-        Expanded(child: StatCard(icon: '🏅', value: '${game.completed}', label: 'Completed')),
-        const SizedBox(width: 10),
-        Expanded(child: StatCard(icon: '🎮', value: '${game.plays}', label: 'Plays')),
+        const SizedBox(width: 10), Expanded(child: StatCard(icon: '🏅', value: '${game.completed}', label: 'Completed')),
+        const SizedBox(width: 10), Expanded(child: StatCard(icon: '🎮', value: '${game.plays}', label: 'Plays')),
       ]),
       const SizedBox(height: 18),
       OutlinedButton.icon(onPressed: () => parentGate(context), icon: const Icon(Icons.family_restroom), label: const Text('Parent Zone'), style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52))),
@@ -169,20 +163,10 @@ class WorldsPage extends StatelessWidget {
     const Text('Complete adventures to unlock new worlds.', style: TextStyle(color: Colors.black54)),
     const SizedBox(height: 18),
     ...List.generate(worldData.length, (i) {
-      final w = worldData[i];
-      final open = game.worlds.contains(i);
+      final w = worldData[i]; final open = game.worlds.contains(i);
       return Card(child: ListTile(enabled: open, contentPadding: const EdgeInsets.all(14), leading: CircleAvatar(radius: 28, child: Text(w.$2, style: const TextStyle(fontSize: 27))), title: Text(w.$1, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(w.$3), trailing: Icon(open ? Icons.chevron_right_rounded : Icons.lock_rounded)));
     }),
   ]);
-}
-
-class GamesPage extends StatelessWidget {
-  final GameState game;
-  const GamesPage({super.key, required this.game});
-  @override Widget build(BuildContext context) {
-    final games = [('🎨','Color Match'), ('🔢','Count & Find'), ('🧠','Memory Pairs'), ('🔺','Shape Spotter'), ('🔤','Letter Fun'), ('⭐','Star Catch')];
-    return GridView.builder(padding: const EdgeInsets.all(20), itemCount: games.length, gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12), itemBuilder: (_, i) => Card(child: InkWell(onTap: () => openGame(context), child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(games[i].$1, style: const TextStyle(fontSize: 42)), const SizedBox(height: 10), Text(games[i].$2, style: const TextStyle(fontWeight: FontWeight.w900))])))));
-  }
 }
 
 class RewardsPage extends StatelessWidget {
@@ -199,47 +183,17 @@ class RewardsPage extends StatelessWidget {
   }
 }
 
-void openGame(BuildContext context) => Navigator.push(context, MaterialPageRoute(builder: (_) => const ColorMatchGame()));
-
-class ColorMatchGame extends StatefulWidget {
-  const ColorMatchGame({super.key});
-  @override State<ColorMatchGame> createState() => _ColorMatchState();
-}
-
-class _ColorMatchState extends State<ColorMatchGame> {
-  final colors = [Colors.red, Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.pink];
-  final random = Random();
-  late Color target, a, b;
-  int round = 0;
-  @override void initState() { super.initState(); next(); }
-  void next() { target = colors[random.nextInt(colors.length)]; a = target; do { b = colors[random.nextInt(colors.length)]; } while (b == target); if (random.nextBool()) { final t = a; a = b; b = t; } }
-  void pick(Color c) { if (c != target) return; if (round == 2) { Navigator.pop(context, true); return; } setState(() { round++; next(); }); }
-  @override Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Color Match 🎨')),
-    body: Padding(padding: const EdgeInsets.all(24), child: Column(children: [
-      const SizedBox(height: 20),
-      Text('Find this color', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-      const SizedBox(height: 20),
-      Container(width: 140, height: 140, decoration: BoxDecoration(color: target, shape: BoxShape.circle)),
-      const Spacer(),
-      Row(children: [Expanded(child: ColorChoice(color: a, onTap: () => pick(a))), const SizedBox(width: 18), Expanded(child: ColorChoice(color: b, onTap: () => pick(b)))]),
-      const SizedBox(height: 24),
-      Text('Round ${round + 1} of 3'),
-    ])),
-  );
-}
-
-class ColorChoice extends StatelessWidget {
-  final Color color;
-  final VoidCallback onTap;
-  const ColorChoice({super.key, required this.color, required this.onTap});
-  @override Widget build(BuildContext context) => InkWell(onTap: onTap, borderRadius: BorderRadius.circular(24), child: Container(height: 130, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(24)), child: const Icon(Icons.touch_app, color: Colors.white, size: 34)));
+void openGame(BuildContext context, GameState game) {
+  Navigator.push(context, MaterialPageRoute(builder: (_) => const ColorMatchGame())).then((value) {
+    if (value == true) game.reward();
+  });
 }
 
 void parentGate(BuildContext context) {
-  final r = Random();
-  final a = r.nextInt(5) + 2;
-  final b = r.nextInt(5) + 2;
-  final controller = TextEditingController();
-  showDialog(context: context, builder: (ctx) => AlertDialog(title: const Text('Parent Zone 👨‍👩‍👧'), content: Column(mainAxisSize: MainAxisSize.min, children: [const Text('Adults only. Solve the question.'), Text('What is $a + $b?', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), TextField(controller: controller, keyboardType: TextInputType.number)]), actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL')), FilledButton(onPressed: () { if (int.tryParse(controller.text) == a + b) Navigator.pop(ctx); }, child: const Text('ENTER'))]));
+  final r = Random(); final a = r.nextInt(5) + 2; final b = r.nextInt(5) + 2; final controller = TextEditingController();
+  showDialog(context: context, builder: (ctx) => AlertDialog(
+    title: const Text('Parent Zone 👨‍👩‍👧'),
+    content: Column(mainAxisSize: MainAxisSize.min, children: [const Text('Adults only. Solve the question.'), Text('What is $a + $b?', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), TextField(controller: controller, keyboardType: TextInputType.number)]),
+    actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL')), FilledButton(onPressed: () { if (int.tryParse(controller.text) == a + b) Navigator.pop(ctx); }, child: const Text('ENTER'))],
+  ));
 }
