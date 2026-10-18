@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'alphabet_game.dart';
 
 class GamesPage extends StatelessWidget {
   final Future<void> Function() onComplete;
@@ -8,27 +9,47 @@ class GamesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final games = [
-      ('🌈', 'Color Match', 'Find the matching color', const ColorMatchGame()),
-      ('🔢', 'Count & Find', 'Count the stars', const CountFindGame()),
-      ('🧠', 'Memory Pairs', 'Match the cards', const MemoryPairsGame()),
-      ('🔷', 'Shape Spotter', 'Find the right shape', const ShapeSpotterGame()),
-      ('🎈', 'Balloon Pop', 'Pop the target balloons', const BalloonPopGame()),
+      ('🔤', 'ABC Sounds', 'Learn letters and hear pronunciation', const AlphabetSoundsGame(), true),
+      ('🌈', 'Color Match', 'Find the matching color', const ColorMatchGame(), false),
+      ('🔢', 'Count & Find', 'Count the stars', const CountFindGame(), false),
+      ('🧠', 'Memory Pairs', 'Match the cards', const MemoryPairsGame(), false),
+      ('🔷', 'Shape Spotter', 'Find the right shape', const ShapeSpotterGame(), false),
+      ('🎈', 'Balloon Pop', 'Pop the target balloons', const BalloonPopGame(), false),
     ];
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
       children: [
-        const Text('Mini Games 🎮', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+        const Text('Mini Games 🎮', style: TextStyle(fontSize: 29, fontWeight: FontWeight.w900)),
         const SizedBox(height: 4),
-        const Text('Choose an adventure and earn stars!', style: TextStyle(color: Colors.black54)),
+        const Text('Play, learn and earn stars!', style: TextStyle(color: Colors.black54, fontSize: 15)),
         const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: const LinearGradient(colors: [Color(0xFFF0E9FF), Color(0xFFE7F8FF)]),
+          ),
+          child: Row(children: [
+            const CircleAvatar(radius: 29, child: Text('🔤', style: TextStyle(fontSize: 28))),
+            const SizedBox(width: 14),
+            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Learn & Speak', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              SizedBox(height: 3),
+              Text('Practice ABC letters with voice pronunciation.', style: TextStyle(color: Colors.black54)),
+            ])),
+          ]),
+        ),
+        const SizedBox(height: 16),
         ...games.map((g) => Card(
           margin: const EdgeInsets.only(bottom: 12),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
           child: ListTile(
-            contentPadding: const EdgeInsets.all(14),
-            leading: CircleAvatar(radius: 28, child: Text(g.$1, style: const TextStyle(fontSize: 27))),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            leading: CircleAvatar(radius: 28, backgroundColor: g.$5 ? const Color(0xFFE8DEFF) : const Color(0xFFF4F0F8), child: Text(g.$1, style: const TextStyle(fontSize: 27))),
             title: Text(g.$2, style: const TextStyle(fontWeight: FontWeight.w900)),
             subtitle: Text(g.$3),
-            trailing: FilledButton(onPressed: () => _open(context, g.$4), child: const Text('PLAY')),
+            trailing: FilledButton(onPressed: () => _open(context, g.$4), child: Text(g.$5 ? 'LEARN' : 'PLAY')),
           ),
         )),
       ],
@@ -200,11 +221,18 @@ class _BalloonPopState extends State<BalloonPopGame> {
 class ColorChoice extends StatelessWidget {
   final Color color; final VoidCallback onTap;
   const ColorChoice({super.key, required this.color, required this.onTap});
-  @override Widget build(BuildContext context) => InkWell(onTap: onTap, borderRadius: BorderRadius.circular(24), child: Container(height: 130, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(24)), child: const Icon(Icons.touch_app, color: Colors.white, size: 34)));
+  @override Widget build(BuildContext context) => InkWell(onTap: onTap, borderRadius: BorderRadius.circular(24), child: Container(height: 130, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(24), boxShadow: const [BoxShadow(blurRadius: 12, offset: Offset(0, 5), color: Color(0x22000000))]), child: const Icon(Icons.touch_app, color: Colors.white, size: 34)));
 }
 
 class GameScaffold extends StatelessWidget {
   final String title; final String instruction; final Widget child;
   const GameScaffold({super.key, required this.title, required this.instruction, required this.child});
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text(title)), body: SingleChildScrollView(padding: const EdgeInsets.all(22), child: Column(children: [Text(instruction, textAlign: TextAlign.center, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)), const SizedBox(height: 10), child])));
+  @override Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(title), centerTitle: true),
+    body: SafeArea(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(20, 18, 20, 28), child: Column(children: [
+      Text(instruction, textAlign: TextAlign.center, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 14),
+      Container(width: double.infinity, padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: const Color(0xFFF8F3FF), borderRadius: BorderRadius.circular(28)), child: child),
+    ]))),
+  );
 }
