@@ -39,14 +39,13 @@ class _AlphabetSoundsGameState extends State<AlphabetSoundsGame> {
     tts.setSpeechRate(0.42);
     tts.setPitch(1.12);
     _nextRound();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _speak());
   }
 
   void _nextRound() {
     current = random.nextInt(letters.length);
     final set = <int>{current};
-    while (set.length < 4) {
-      set.add(random.nextInt(letters.length));
-    }
+    while (set.length < 4) set.add(random.nextInt(letters.length));
     options = set.toList()..shuffle();
   }
 
@@ -91,54 +90,46 @@ class _AlphabetSoundsGameState extends State<AlphabetSoundsGame> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           child: Column(
             children: [
-              const Text(
-                'Learn the letter, hear the sound, then choose it!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              const Text('Listen • Learn • Choose', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 5),
+              const Text('Learn the letter, hear the sound, then choose it!', textAlign: TextAlign.center, style: TextStyle(color: Colors.black54)),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: LinearProgressIndicator(value: round / 5, minHeight: 9),
               ),
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.fromLTRB(22, 18, 22, 22),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF7657E8), Color(0xFF32C7F5)],
-                  ),
-                  boxShadow: const [
-                    BoxShadow(blurRadius: 18, offset: Offset(0, 8), color: Color(0x22000000)),
-                  ],
+                  gradient: const LinearGradient(colors: [Color(0xFF7657E8), Color(0xFF32C7F5)]),
+                  boxShadow: const [BoxShadow(blurRadius: 18, offset: Offset(0, 8), color: Color(0x22000000))],
                 ),
                 child: Column(
                   children: [
-                    Text(item.$3, style: const TextStyle(fontSize: 48)),
-                    Text(
-                      item.$1,
-                      style: const TextStyle(
-                        fontSize: 92,
-                        height: .95,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    Text(item.$3, style: const TextStyle(fontSize: 46)),
+                    Text(item.$1, style: const TextStyle(fontSize: 92, height: .95, color: Colors.white, fontWeight: FontWeight.w900)),
+                    Text(item.$2, style: const TextStyle(fontSize: 25, color: Colors.white, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(.18), borderRadius: BorderRadius.circular(20)),
+                      child: Text('Sound: /${item.$4}/', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                     ),
-                    Text(
-                      item.$2,
-                      style: const TextStyle(fontSize: 25, color: Colors.white, fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 13),
                     FilledButton.icon(
                       onPressed: _speak,
                       icon: const Icon(Icons.volume_up_rounded),
-                      label: const Text('HEAR PRONUNCIATION'),
+                      label: const Text('HEAR AGAIN'),
+                      style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Color(0xFF6249B5)),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
-              Text(
-                'Which one is ${item.$1}?',
-                style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-              ),
+              Text('Which one is ${item.$1}?', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
               const SizedBox(height: 12),
               GridView.count(
                 shrinkWrap: true,
@@ -147,26 +138,14 @@ class _AlphabetSoundsGameState extends State<AlphabetSoundsGame> {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.45,
-                children: options
-                    .map(
-                      (i) => FilledButton(
-                        onPressed: () => _pick(i),
-                        style: FilledButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                        ),
-                        child: Text(
-                          letters[i].$1,
-                          style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900),
-                        ),
-                      ),
-                    )
-                    .toList(),
+                children: options.map((i) => FilledButton(
+                  onPressed: () => _pick(i),
+                  style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+                  child: Text(letters[i].$1, style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
+                )).toList(),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Round $round of 5  •  Score $score',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
-              ),
+              Text('Round $round of 5  •  Score $score', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
             ],
           ),
         ),
