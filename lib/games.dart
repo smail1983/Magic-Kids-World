@@ -8,7 +8,7 @@ class GamesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final games = const [
+    const games = [
       ('🔤', 'ABC Sounds', 'Learn letters and hear pronunciation', AlphabetSoundsGame(), true),
       ('🌈', 'Color Match', 'Find the matching color', ColorMatchGame(), false),
       ('🔢', 'Count & Find', 'Count the stars', CountFindGame(), false),
