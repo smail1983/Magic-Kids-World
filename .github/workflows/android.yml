@@ -22,6 +22,12 @@ jobs:
       - name: Generate Android project files
         run: flutter create --platforms=android --project-name magic_kids_world .
 
+      - name: Configure Android build for flutter_tts
+        run: |
+          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.10"/' android/settings.gradle
+          sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle
+          sed -i 's/minSdk = [0-9]*/minSdk = 21/' android/app/build.gradle
+
       - name: Get dependencies
         run: flutter pub get
 
