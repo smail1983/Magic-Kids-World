@@ -73,7 +73,7 @@ class _AppState extends State<MagicKidsWorldApp> {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7657E8)),
         scaffoldBackgroundColor: const Color(0xFFF7FBFF),
-        cardTheme: CardThemeData(elevation: 0, color: const Color(0xFFFFFAFF), margin: EdgeInsets.zero),
+        cardTheme: const CardTheme(elevation: 0, color: Color(0xFFFFFAFF), margin: EdgeInsets.zero),
       ),
       home: HomeScreen(game: game),
     ),
