@@ -154,15 +154,22 @@ class HomePage extends StatelessWidget {
       const SizedBox(height: 8),
       Container(
         height: 218,
-        padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
+        padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF7657E8), Color(0xFF32C7F5)]), boxShadow: const [BoxShadow(blurRadius: 20, offset: Offset(0, 9), color: Color(0x26000000))]),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('✨ MAGIC KIDS', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, letterSpacing: 2)),
-          const SizedBox(height: 2),
-          const Text('WORLD', style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900)),
-          const Text('Play • Learn • Explore', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
-          const Spacer(),
-          FilledButton.icon(onPressed: onPlay, icon: const Icon(Icons.play_arrow_rounded), label: const Text('PLAY NOW'), style: FilledButton.styleFrom(backgroundColor: const Color(0xFF65509D), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12))),
+        child: Stack(children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('✨ MAGIC KIDS', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            const SizedBox(height: 2),
+            const Text('WORLD', style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900)),
+            const Text('Play • Learn • Explore', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            Row(children: [
+              FilledButton.icon(onPressed: onPlay, icon: const Icon(Icons.play_arrow_rounded), label: const Text('PLAY NOW'), style: FilledButton.styleFrom(backgroundColor: const Color(0xFF65509D), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12))),
+              const SizedBox(width: 12),
+              const Text('🎮 Play & Learn', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            ]),
+          ]),
+          Positioned(right: 2, top: 2, child: Container(width: 68, height: 68, decoration: BoxDecoration(color: Colors.white.withOpacity(.20), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(.45), width: 2)), child: const Center(child: Text('🧒', style: TextStyle(fontSize: 40))))),
         ]),
       ),
       const SizedBox(height: 20),
