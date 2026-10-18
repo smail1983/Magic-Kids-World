@@ -45,7 +45,9 @@ class _AlphabetSoundsGameState extends State<AlphabetSoundsGame> {
   void _nextRound() {
     current = random.nextInt(letters.length);
     final set = <int>{current};
-    while (set.length < 4) set.add(random.nextInt(letters.length));
+    while (set.length < 4) {
+      set.add(random.nextInt(letters.length));
+    }
     options = set.toList()..shuffle();
   }
 
@@ -123,7 +125,7 @@ class _AlphabetSoundsGameState extends State<AlphabetSoundsGame> {
                       onPressed: _speak,
                       icon: const Icon(Icons.volume_up_rounded),
                       label: const Text('HEAR AGAIN'),
-                      style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Color(0xFF6249B5)),
+                      style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF6249B5)),
                     ),
                   ],
                 ),
