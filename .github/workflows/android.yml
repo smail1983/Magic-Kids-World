@@ -25,8 +25,16 @@ jobs:
       - name: Configure Android build for flutter_tts
         run: |
           sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.10"/' android/settings.gradle
-          sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle
-          sed -i 's/minSdk = [0-9]*/minSdk = 21/' android/app/build.gradle
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android/app/build.gradle')
+          s = p.read_text()
+          s = s.replace('flutter.compileSdkVersion', '36')
+          s = s.replace('lutter.compileSdkVersion', '36')
+          s = s.replace('flutter.minSdkVersion', '21')
+          s = s.replace('lutter.minSdkVersion', '21')
+          p.write_text(s)
+          PY
 
       - name: Get dependencies
         run: flutter pub get
