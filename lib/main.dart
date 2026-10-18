@@ -51,6 +51,20 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setCharacter(int value) async {
+    character = value;
+    final p = await SharedPreferences.getInstance();
+    await p.setInt('character', value);
+    notifyListeners();
+  }
+
+  Future<void> setSound(bool value) async {
+    sound = value;
+    final p = await SharedPreferences.getInstance();
+    await p.setBool('sound', value);
+    notifyListeners();
+  }
+
   Future<void> clickSound() async {
     if (sound) await SystemSound.play(SystemSoundType.click);
   }
@@ -89,7 +103,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeState extends State<HomeScreen> {
   int tab = 0;
   @override Widget build(BuildContext context) {
-    final pages = [
+    final pages = <Widget>[
       HomePage(game: widget.game, onPlay: () => openGame(context, widget.game)),
       WorldsPage(game: widget.game),
       GamesPage(onComplete: widget.game.reward),
@@ -121,7 +135,7 @@ class HomePage extends StatelessWidget {
   @override Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
     children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Hello, Explorer! 👋', style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900)),
           SizedBox(height: 3),
@@ -131,15 +145,16 @@ class HomePage extends StatelessWidget {
       ]),
       const SizedBox(height: 8),
       Row(children: [
-        TweenAnimationBuilder<double>(tween: Tween(begin: .75, end: 1), duration: const Duration(milliseconds: 700), curve: Curves.elasticOut, builder: (_, scale, child) => Transform.scale(scale: scale, child: child), child: Text(characters[game.character], style: const TextStyle(fontSize: 46))),
+        Text(characters[game.character.clamp(0, characters.length - 1)], style: const TextStyle(fontSize: 46)),
         const SizedBox(width: 10),
         Text('Your friend is ready!', style: TextStyle(color: Colors.deepPurple.shade700, fontWeight: FontWeight.bold)),
         const Spacer(),
         IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CharacterSelector(game: game))), icon: const Icon(Icons.edit_rounded), tooltip: 'Choose character'),
       ]),
       const SizedBox(height: 8),
-      TweenAnimationBuilder<double>(tween: Tween(begin: 0, end: 1), duration: const Duration(milliseconds: 650), builder: (_, v, child) => Opacity(opacity: v, child: Transform.translate(offset: Offset(0, 16 * (1-v)), child: child)), child: Container(
-        height: 218, padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
+      Container(
+        height: 218,
+        padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF7657E8), Color(0xFF32C7F5)]), boxShadow: const [BoxShadow(blurRadius: 20, offset: Offset(0, 9), color: Color(0x26000000))]),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('✨ MAGIC KIDS', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, letterSpacing: 2)),
@@ -149,7 +164,7 @@ class HomePage extends StatelessWidget {
           const Spacer(),
           FilledButton.icon(onPressed: onPlay, icon: const Icon(Icons.play_arrow_rounded), label: const Text('PLAY NOW'), style: FilledButton.styleFrom(backgroundColor: const Color(0xFF65509D), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12))),
         ]),
-      )),
+      ),
       const SizedBox(height: 20),
       const Text('Learn Something New 📚', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
       const SizedBox(height: 10),
@@ -159,11 +174,11 @@ class HomePage extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(color: const Color(0xFFF1EBFF), borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFE1D7FF))),
-          child: Row(children: [
-            const CircleAvatar(radius: 29, backgroundColor: Color(0xFFE2D7FF), child: Text('🔤', style: TextStyle(fontSize: 27))),
-            const SizedBox(width: 13),
-            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('ABC Sounds', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)), SizedBox(height: 3), Text('Learn letters and hear their pronunciation.', style: TextStyle(color: Colors.black54))])),
-            const Icon(Icons.volume_up_rounded, color: Color(0xFF7657E8)),
+          child: const Row(children: [
+            CircleAvatar(radius: 29, backgroundColor: Color(0xFFE2D7FF), child: Text('🔤', style: TextStyle(fontSize: 27))),
+            SizedBox(width: 13),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('ABC Sounds', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)), SizedBox(height: 3), Text('Learn letters and hear their pronunciation.', style: TextStyle(color: Colors.black54))])),
+            Icon(Icons.volume_up_rounded, color: Color(0xFF7657E8)),
           ]),
         ),
       ),
@@ -172,11 +187,7 @@ class HomePage extends StatelessWidget {
       const SizedBox(height: 10),
       Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)), child: ListTile(contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), leading: const CircleAvatar(backgroundColor: Color(0xFFE9DFFF), child: Text('🌈')), title: const Text('Rainbow Challenge', style: TextStyle(fontWeight: FontWeight.bold)), subtitle: const Text('A short color matching game'), trailing: FilledButton(onPressed: onPlay, child: const Text('GO')))),
       const SizedBox(height: 16),
-      Row(children: [
-        Expanded(child: StatCard(icon: '⭐', value: '${game.stars}', label: 'Stars')),
-        const SizedBox(width: 10), Expanded(child: StatCard(icon: '🏅', value: '${game.completed}', label: 'Completed')),
-        const SizedBox(width: 10), Expanded(child: StatCard(icon: '🎮', value: '${game.plays}', label: 'Plays')),
-      ]),
+      Row(children: [Expanded(child: StatCard(icon: '⭐', value: '${game.stars}', label: 'Stars')), const SizedBox(width: 10), Expanded(child: StatCard(icon: '🏅', value: '${game.completed}', label: 'Completed')), const SizedBox(width: 10), Expanded(child: StatCard(icon: '🎮', value: '${game.plays}', label: 'Plays'))]),
       const SizedBox(height: 18),
       OutlinedButton.icon(onPressed: () => parentGate(context), icon: const Icon(Icons.family_restroom), label: const Text('Parent Zone'), style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)))),
     ],
@@ -189,13 +200,7 @@ class StatCard extends StatelessWidget {
   @override Widget build(BuildContext context) => Container(padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6), decoration: BoxDecoration(color: const Color(0xFFFFF9FF), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFEAE1ED))), child: Column(children: [Text(icon, style: const TextStyle(fontSize: 24)), const SizedBox(height: 2), Text(value, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)), const SizedBox(height: 2), Text(label, style: const TextStyle(fontSize: 11))]));
 }
 
-const worldData = [
-  ('Happy Forest', '🌳', 'Animals, nature & counting'),
-  ('Ocean World', '🐳', 'Fish, colors & matching'),
-  ('Space World', '🚀', 'Planets, rockets & numbers'),
-  ('Magic Castle', '🏰', 'Shapes & memory'),
-  ('Cloud World', '☁️', 'Rainbows, letters & puzzles'),
-];
+const worldData = [('Happy Forest', '🌳', 'Animals, nature & counting'), ('Ocean World', '🐳', 'Fish, colors & matching'), ('Space World', '🚀', 'Planets, rockets & numbers'), ('Magic Castle', '🏰', 'Shapes & memory'), ('Cloud World', '☁️', 'Rainbows, letters & puzzles')];
 
 class WorldsPage extends StatelessWidget {
   final GameState game;
@@ -205,8 +210,9 @@ class WorldsPage extends StatelessWidget {
     const Text('Complete adventures to unlock new worlds.', style: TextStyle(color: Colors.black54)),
     const SizedBox(height: 18),
     ...List.generate(worldData.length, (i) {
-      final w = worldData[i]; final open = game.worlds.contains(i);
-      return Padding(padding: const EdgeInsets.only(bottom: 12), child: TweenAnimationBuilder<double>(tween: Tween(begin: .92, end: 1), duration: Duration(milliseconds: 300 + i * 90), builder: (_, scale, child) => Transform.scale(scale: scale, child: child), child: Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)), child: ListTile(enabled: open, contentPadding: const EdgeInsets.all(14), leading: CircleAvatar(radius: 28, child: Text(w.$2, style: const TextStyle(fontSize: 27))), title: Text(w.$1, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(w.$3), trailing: Icon(open ? Icons.play_arrow_rounded : Icons.lock_rounded), onTap: open ? () { game.clickSound(); worldWelcome(context, w.$1, w.$2, w.$3); } : null)));
+      final w = worldData[i];
+      final open = game.worlds.contains(i);
+      return Padding(padding: const EdgeInsets.only(bottom: 12), child: Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)), child: ListTile(enabled: open, contentPadding: const EdgeInsets.all(14), leading: CircleAvatar(radius: 28, child: Text(w.$2, style: const TextStyle(fontSize: 27))), title: Text(w.$1, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(w.$3), trailing: Icon(open ? Icons.play_arrow_rounded : Icons.lock_rounded), onTap: open ? () => worldWelcome(context, w.$1, w.$2, w.$3) : null)));
     }),
   ]);
 }
@@ -220,9 +226,12 @@ class RewardsPage extends StatelessWidget {
       const Text('My Rewards 🎁', style: TextStyle(fontSize: 29, fontWeight: FontWeight.w900)),
       Text('${game.stars} stars collected', style: const TextStyle(color: Colors.black54)),
       const SizedBox(height: 18),
-      ...rewards.map((r) => Padding(padding: const EdgeInsets.only(bottom: 10), child: Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)), child: ListTile(contentPadding: const EdgeInsets.all(12), leading: Text(r.$2, style: const TextStyle(fontSize: 35)), title: Text(r.$3, style: const TextStyle(fontWeight: FontWeight.bold)), subtitle: Text(game.items.contains(r.$1) ? 'Unlocked!' : 'Unlock at ${r.$4} stars'), trailing: Icon(game.items.contains(r.$1) ? Icons.check_circle : Icons.lock_outline)))),
+      ...rewards.map((r) {
+        final unlocked = game.items.contains(r.$1);
+        return Padding(padding: const EdgeInsets.only(bottom: 10), child: Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)), child: ListTile(contentPadding: const EdgeInsets.all(12), leading: Text(r.$2, style: const TextStyle(fontSize: 35)), title: Text(r.$3, style: const TextStyle(fontWeight: FontWeight.bold)), subtitle: Text(unlocked ? 'Unlocked!' : 'Unlock at ${r.$4} stars'), trailing: Icon(unlocked ? Icons.check_circle : Icons.lock_outline))));
+      }),
       const SizedBox(height: 8),
-      Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)), child: SwitchListTile(value: game.sound, onChanged: (v) async { game.sound = v; final p = await SharedPreferences.getInstance(); await p.setBool('sound', v); game.notifyListeners(); }, title: const Text('Sound effects 🔊'), subtitle: const Text('Tap sounds for navigation and actions'))),
+      Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)), child: SwitchListTile(value: game.sound, onChanged: game.setSound, title: const Text('Sound effects 🔊'), subtitle: const Text('Tap sounds for navigation and actions'))),
     ]);
   }
 }
@@ -232,14 +241,20 @@ void openGame(BuildContext context, GameState game) {
 }
 
 void worldWelcome(BuildContext context, String name, String icon, String description) {
-  showDialog(context: context, builder: (_) => AlertDialog(title: Text('$icon $name'), content: Text('Welcome to $name!\n\n$description\n\nMore adventures will unlock as you play.'), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('LET’S GO!'))]));
+  showDialog<void>(context: context, builder: (ctx) => AlertDialog(title: Text('$icon $name'), content: Text('Welcome to $name!\n\n$description\n\nMore adventures will unlock as you play.'), actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("LET'S GO!"))]));
 }
 
 void parentGate(BuildContext context) {
-  final r = Random(); final a = r.nextInt(5) + 2; final b = r.nextInt(5) + 2; final controller = TextEditingController();
-  showDialog(context: context, builder: (ctx) => AlertDialog(
+  final r = Random();
+  final a = r.nextInt(5) + 2;
+  final b = r.nextInt(5) + 2;
+  final controller = TextEditingController();
+  showDialog<void>(context: context, builder: (ctx) => AlertDialog(
     title: const Text('Parent Zone 👨‍👩‍👧'),
     content: Column(mainAxisSize: MainAxisSize.min, children: [const Text('Adults only. Solve the question.'), const SizedBox(height: 8), Text('What is $a + $b?', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), TextField(controller: controller, keyboardType: TextInputType.number)]),
-    actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL')), FilledButton(onPressed: () { if (int.tryParse(controller.text) == a + b) Navigator.pop(ctx); }, child: const Text('ENTER'))],
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL')),
+      FilledButton(onPressed: () { if (int.tryParse(controller.text) == a + b) Navigator.pop(ctx); }, child: const Text('ENTER')),
+    ],
   ));
 }
